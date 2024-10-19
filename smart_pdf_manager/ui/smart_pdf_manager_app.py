@@ -1,11 +1,12 @@
 import os
 import sys
 from os.path import expanduser
+from pathlib import Path
 
 from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QVBoxLayout, QFileDialog, QLineEdit, QComboBox, QAction, QMenuBar
 from PyQt5.QtCore import Qt
 from PyQt5 import QtGui
-from SmartPDFManager.utils import extract_text_from_pdf
+from smart_pdf_manager.utils import extract_text_from_pdf
 import spacy
 from collections import Counter
 
@@ -143,6 +144,13 @@ class SmartPDFManagerApp(QWidget):
             return
 
         self.status_label.setText("Organizing PDFs...")
+        self.status_label.setStyleSheet("""
+                                        background-color: red;
+                                        color: black;
+                                        border: 2px solid red;
+                                        border-radius: 10px;
+                                        padding: 10px;
+                                    """)
         for root, dirs, files in os.walk(self.__selected_input_directory):
             for file in files:
                 if file.endswith(".pdf"):
@@ -162,6 +170,13 @@ class SmartPDFManagerApp(QWidget):
                     except Exception as e:
                         print(f"Error organizing {pdf_path}: {e}")
                         self.status_label.setText(f"Error organizing PDFs: {e}")
+        self.status_label.setStyleSheet("""
+                                        background-color: lightgreen;
+                                        color: black;
+                                        border: 2px solid lightgreen;
+                                        border-radius: 10px;
+                                        padding: 10px;
+                                    """)
         self.status_label.setText("PDFs organized successfully!")
 
 
