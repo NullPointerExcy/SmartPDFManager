@@ -21,7 +21,6 @@ class SmartPDFManagerApp(QWidget):
 
     def __init__(self):
         super().__init__()
-
         self.ui_components()
 
     def analyze_and_categorize_pdf(self, pdf_path):
@@ -38,30 +37,14 @@ class SmartPDFManagerApp(QWidget):
         else:
             return "Uncategorized"
 
-    def ui_menubar(self):
-        menubar = QMenuBar()
-        file_menu = menubar.addMenu("File")
-        open_action = QAction("Open", self)
-        open_action.setStatusTip("Open a PDF file")
-        open_action.triggered.connect(self.open_file)
-
-        edit_menu = menubar.addMenu("Edit")
-
-        help_menu = menubar.addMenu("Help")
-        about_action = QAction("About", self)
-        about_action.setStatusTip("About the application")
-        about_action.triggered.connect(self.show_about)
-        help_menu.addAction(about_action)
-
     def ui_components(self):
         self.setWindowTitle("Smart PDF Manager")
+
         self.setGeometry(100, 100, 400, 200)
         self.setWindowIcon(QtGui.QIcon("resources/SmartPDFManagerLogo.png"))
         layout = QVBoxLayout()
         layout.setSpacing(15)
         layout.setContentsMargins(20, 20, 20, 20)
-
-        self.ui_menubar()
 
         layout.addWidget(QLabel("Select the language for text analysis:"))
         self.language_combobox = QComboBox(self)
@@ -97,9 +80,13 @@ class SmartPDFManagerApp(QWidget):
 
         self.organize_button = QPushButton("Organize PDFs")
         self.organize_button.setStyleSheet("""
-                                        border: 2px solid black;
-                                        border-radius: 10px;
-                                        padding: 5px;
+                                        QPushButton {
+                                            border: 2px solid black;
+                                            padding: 5px;
+                                        }
+                                        QPushButton:hover {
+                                            background-color: lightgreen;
+                                        }
                                     """)
         layout.addWidget(self.organize_button)
 
