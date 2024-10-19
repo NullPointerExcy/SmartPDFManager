@@ -1,2 +1,9 @@
 /venv/
 /.idea/
+build/
+dist/
+/smart_pdf_manager/ui/models/de_core_news_sm/
+/smart_pdf_manager/ui/models/fr_core_news_sm/
+/smart_pdf_manager/ui/models/en_core_web_sm/
+/SmartPDFManager.egg-info/
+/.eggs/
