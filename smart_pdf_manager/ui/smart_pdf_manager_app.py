@@ -3,16 +3,19 @@ import sys
 from os.path import expanduser
 from pathlib import Path
 
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QVBoxLayout, QFileDialog, QLineEdit, QComboBox, QAction, QMenuBar
+sys.path.append(str(Path(__file__).resolve().parent.parent))
+
+from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QVBoxLayout, QFileDialog, QLineEdit, QComboBox, \
+    QAction, QMenuBar
 from PyQt5.QtCore import Qt
 from PyQt5 import QtGui
 from smart_pdf_manager.utils import extract_text_from_pdf
+# import smart_pdf_manager.ui.configuration.configuration as config
 import spacy
 from collections import Counter
 
 
 class SmartPDFManagerApp(QWidget):
-
     __available_languages = ["English", "German", "French"]
 
     __selected_input_directory = ""
@@ -91,7 +94,6 @@ class SmartPDFManagerApp(QWidget):
                                     """)
         layout.addWidget(self.organize_button)
 
-
         self.status_label = QLabel("Idle...")
         self.status_label.setAlignment(Qt.AlignCenter)
         self.status_label.setStyleSheet("""
@@ -116,10 +118,13 @@ class SmartPDFManagerApp(QWidget):
     def change_language(self):
         match = self.language_combobox.currentText()
         if match == "English":
+            # self.custom_keywords = config.load_custom_keywords("english")
             self.nlp = spacy.load("en_core_web_sm")
         elif match == "German":
+            # self.custom_keywords = config.load_custom_keywords("german")
             self.nlp = spacy.load("de_core_news_sm")
         elif match == "French":
+            # self.custom_keywords = config.load_custom_keywords("french")
             self.nlp = spacy.load("fr_core_news_sm")
 
     def choose_input_directory(self):
