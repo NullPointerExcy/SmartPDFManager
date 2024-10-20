@@ -11,7 +11,7 @@
    <img src="smart_pdf_manager/ui/resources/spdfm_tool.png" width="300" />
 </p>
 
-## Installation
+## Installation (Only if you don't use the executable)
 
 1. Clone this repository:
    ```bash
@@ -31,7 +31,7 @@
    py -m spacy download fr_core_news_sm
    ```
    
-## Usage
+## Usage (Only if you don't use the executable)
 
 1. Run the application:
    ```bash

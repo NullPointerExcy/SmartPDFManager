@@ -1,7 +1,11 @@
 import os
+import subprocess
 import sys
+import threading
+import time
 from os.path import expanduser
 from pathlib import Path
+from typing import List, Any, Tuple
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
@@ -16,23 +20,31 @@ from collections import Counter
 
 
 class SmartPDFManagerApp(QWidget):
-    __available_languages = ["English", "German", "French"]
+    __available_languages: List[str] = ["English", "German", "French"]
 
-    __selected_input_directory = ""
-    __selected_output_directory = ""
+    __selected_input_directory: str | None = None
+    __selected_output_directory: str | None = None
+    __default_model_path = Path.home() / "spacy_models"
 
-    nlp = spacy.load("en_core_web_sm")
+    nlp = None
+    status_label = None
+
 
     def __init__(self):
         super().__init__()
+        self.status_label = QLabel("Idle...")
+        self.download_model_if_needed("English")
+
+        model_path = self.__default_model_path / "en_core_web_sm" / "en_core_web_sm-3.8.0"
+        self.nlp = spacy.load(str(model_path))
         self.ui_components()
 
-    def analyze_and_categorize_pdf(self, pdf_path):
-        text = extract_text_from_pdf(pdf_path)
-        doc = self.nlp(text)
+    def analyze_and_categorize_pdf(self, pdf_path: str) -> str:
+        text: str = extract_text_from_pdf(pdf_path)
+        doc: Any = self.nlp(text)
 
-        entities = [(ent.text, ent.label_) for ent in doc.ents]
-        labels = [label for _, label in entities if label not in ["CARDINAL", "DATE", "TIME"]]
+        entities: List[Tuple[str, Any]] = [(ent.text, ent.label_) for ent in doc.ents]
+        labels: List = [label for _, label in entities if label not in ["CARDINAL", "DATE", "TIME"]]
         label_counter = Counter(labels)
 
         if label_counter:
@@ -92,6 +104,7 @@ class SmartPDFManagerApp(QWidget):
                                             background-color: lightgreen;
                                         }
                                     """)
+        self.organize_button.setDisabled(self.__selected_output_directory is None or self.__selected_input_directory is None)
         layout.addWidget(self.organize_button)
 
         self.status_label = QLabel("Idle...")
@@ -109,29 +122,53 @@ class SmartPDFManagerApp(QWidget):
 
         self.organize_button.clicked.connect(self.organize_pdfs)
 
-    def open_file(self):
-        self.status_label.setText("Open File clicked")
+    def download_model_in_thread(self, model_name: str):
+        # Download des Modells in einem separaten Thread
+        download_thread = threading.Thread(target=self.download_model_if_needed, args=(model_name,))
+        download_thread.start()
 
-    def show_about(self):
-        self.status_label.setText("Smart PDF Manager v1.0")
+    def download_model_if_needed(self, language: str):
+        if language == "English":
+            model_path: Path = self.__default_model_path / "en_core_web_sm"
+            if not (model_path / "config.cfg").exists():
+                self.status_label.setText("Downloading English model...")
+                subprocess.run(["python", "-m", "spacy", "download", "en_core_web_sm", "--target", str(self.__default_model_path)])
+                self.status_label.setText("Idle...")
+        elif language == "German":
+            model_path: Path = self.__default_model_path / "de_core_news_sm"
+            if not (model_path / "config.cfg").exists():
+                self.status_label.setText("Downloading German model...")
+                subprocess.run(["python", "-m", "spacy", "download", "de_core_news_sm", "--target", str(self.__default_model_path)])
+                self.status_label.setText("Idle...")
+        elif language == "French":
+            model_path: Path = self.__default_model_path / "fr_core_news_sm"
+            if not (model_path / "config.cfg").exists():
+                self.status_label.setText("Downloading French model...")
+                subprocess.run(["python", "-m", "spacy", "download", "fr_core_news_sm", "--target", str(self.__default_model_path)])
+                self.status_label.setText("Idle...")
 
     def change_language(self):
-        match = self.language_combobox.currentText()
+        match: str = self.language_combobox.currentText()
+        self.status_label.setText(f"Downloading {match} model...")
+
+        self.download_model_in_thread(match)
+
         if match == "English":
-            # self.custom_keywords = config.load_custom_keywords("english")
-            self.nlp = spacy.load("en_core_web_sm")
+            model_path = self.__default_model_path / "en_core_web_sm" / "en_core_web_sm-3.8.0"
+            self.nlp = spacy.load(str(model_path))
         elif match == "German":
-            # self.custom_keywords = config.load_custom_keywords("german")
-            self.nlp = spacy.load("de_core_news_sm")
+            model_path = self.__default_model_path / "de_core_news_sm" / "de_core_news_sm-3.8.0"
+            self.nlp = spacy.load(str(model_path))
         elif match == "French":
-            # self.custom_keywords = config.load_custom_keywords("french")
-            self.nlp = spacy.load("fr_core_news_sm")
+            model_path = self.__default_model_path / "fr_core_news_sm" / "fr_core_news_sm-3.8.0"
+            self.nlp = spacy.load(str(model_path))
 
     def choose_input_directory(self):
         input_dir = QFileDialog.getExistingDirectory(None, 'Select a folder:', expanduser("~"))
         if input_dir:
             self.line_edit_input_Directory.setText(input_dir)
             self.__selected_input_directory = input_dir
+            self.organize_button.setDisabled(self.__selected_output_directory is None or self.__selected_input_directory is None)
         else:
             self.status_label.setText("No directory selected!")
 
@@ -140,6 +177,7 @@ class SmartPDFManagerApp(QWidget):
         if input_dir:
             self.line_edit_output_directory.setText(input_dir)
             self.__selected_output_directory = input_dir
+            self.organize_button.setDisabled(self.__selected_output_directory is None or self.__selected_input_directory is None)
         else:
             self.status_label.setText("No directory selected!")
 
@@ -159,13 +197,13 @@ class SmartPDFManagerApp(QWidget):
         for root, dirs, files in os.walk(self.__selected_input_directory):
             for file in files:
                 if file.endswith(".pdf"):
-                    pdf_path = os.path.join(root, file)
+                    pdf_path: str = os.path.join(root, file)
                     try:
-                        category = self.analyze_and_categorize_pdf(pdf_path)
-                        folder_path = os.path.join(self.__selected_output_directory, category)
+                        category: str = self.analyze_and_categorize_pdf(pdf_path)
+                        folder_path: str = os.path.join(self.__selected_output_directory, category)
                         os.makedirs(folder_path, exist_ok=True)
 
-                        new_path = os.path.join(folder_path, file)
+                        new_path: str = os.path.join(folder_path, file)
                         if os.path.exists(new_path):
                             print(f"File {new_path} already exists, skipping.")
                             continue
