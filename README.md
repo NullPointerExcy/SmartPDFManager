@@ -35,8 +35,7 @@
    
 ## Usage 
 
-(Only if you don't use the executable)
-1. Run the application:
+1. Run the application (Only if you don't use the executable):
    ```bash
    py -m smart_pdf_manager.ui.smart_pdf_manager_app
    ```
