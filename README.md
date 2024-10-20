@@ -33,12 +33,14 @@
    py -m spacy download fr_core_news_sm
    ```
    
-## Usage (Only if you don't use the executable)
+## Usage 
 
+(Only if you don't use the executable)
 1. Run the application:
    ```bash
    py -m smart_pdf_manager.ui.smart_pdf_manager_app
    ```
+
 2. Select a language for entity recognition (English, German, or French).
 3. Place the PDF files you want to organize in a directory of your choice (e.g., `pdfs/`).
 4. Choose a directory "input" where the PDFs are located and a directory "output" where the PDFs will be moved to.
