@@ -1,5 +1,7 @@
 ﻿# SmartPDFManager
 
+[![Download Latest Release](https://img.shields.io/github/v/release/Dagait/SmartPDFManager)](https://github.com/Dagait/SmartPDFManager/releases/latest)
+
 **Smart PDF Manager** is a Python-based tool designed to automate the organization of PDF files. It leverages **SpaCy**, a powerful natural language processing (NLP) library, to analyze the contents of PDF files and classify them into categories based on extracted entities such as organizations, people, locations, and more. By using SpaCy's entity recognition models, the tool can intelligently categorize PDFs written in English, German, and French, making it highly versatile for multilingual document management.
 
 ## Features
