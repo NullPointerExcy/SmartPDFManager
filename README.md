@@ -28,13 +28,6 @@
     pip install -r requirements.txt
     ```
    
-3. Install the SpaCy models for English, German and French:
-   ```bash
-   py -m spacy download en_core_web_sm
-   py -m spacy download de_core_news_sm
-   py -m spacy download fr_core_news_sm
-   ```
-   
 ## Usage 
 
 1. Run the application (Only if you don't use the executable):
