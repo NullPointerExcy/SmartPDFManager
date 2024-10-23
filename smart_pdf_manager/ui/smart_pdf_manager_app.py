@@ -7,10 +7,12 @@ from os.path import expanduser
 from pathlib import Path
 from typing import List, Any, Tuple
 
+from smart_pdf_manager.db.db_manager import DBManager
+from smart_pdf_manager.ui.keyword_manager_app import KeywordManagerApp
+
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QVBoxLayout, QFileDialog, QLineEdit, QComboBox, \
-    QAction, QMenuBar
+from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QPushButton, QVBoxLayout, QFileDialog, QLineEdit, QComboBox
 from PyQt5.QtCore import Qt
 from PyQt5 import QtGui
 from smart_pdf_manager.utils import extract_text_from_pdf
@@ -25,13 +27,23 @@ class SmartPDFManagerApp(QWidget):
     __selected_input_directory: str | None = None
     __selected_output_directory: str | None = None
     __default_model_path = Path.home() / "spacy_models"
+    __db_manager = None
+    __keyword_manager_app: KeywordManagerApp = None
 
     nlp = None
     status_label = None
 
+    @property
+    def db_manager(self):
+        if not self.__db_manager:
+            from smart_pdf_manager.db.db_manager import DBManager
+            self.__db_manager = DBManager()
+        return self.__db_manager
 
     def __init__(self):
         super().__init__()
+        self.__db_manager = DBManager()
+
         self.status_label = QLabel("Idle...")
         self.download_model_if_needed("English")
 
@@ -43,9 +55,18 @@ class SmartPDFManagerApp(QWidget):
         text: str = extract_text_from_pdf(pdf_path)
         doc: Any = self.nlp(text)
 
+        label_replacements = self.__db_manager.load_labels_from_db()
+
         entities: List[Tuple[str, Any]] = [(ent.text, ent.label_) for ent in doc.ents]
-        labels: List = [label for _, label in entities if label not in ["CARDINAL", "DATE", "TIME"]]
-        label_counter = Counter(labels)
+        replaced_labels = []
+        # Replace the labels with the custom labels from the database
+        for _, label in entities:
+            if label in label_replacements:
+                replaced_labels.append(label_replacements[label])
+            else:
+                replaced_labels.append(label)
+
+        label_counter = Counter(replaced_labels)
 
         if label_counter:
             most_common_label = label_counter.most_common(1)[0][0]
@@ -92,6 +113,16 @@ class SmartPDFManagerApp(QWidget):
         self.pushButton_outputDirectory.clicked.connect(self.choose_output_directory)
         layout.addWidget(self.pushButton_outputDirectory)
 
+        layout.addSpacing(20)
+        self.open_label_keyword_manager = QPushButton("Open Label Keyword Manager")
+        self.open_label_keyword_manager.setStyleSheet("""
+                                                    QPushButton { 
+                                                        background-color: lightblue;
+                                                    }
+                                                    """)
+        self.open_label_keyword_manager.clicked.connect(self.open_keyword_manager_app)
+        layout.addWidget(self.open_label_keyword_manager)
+
         layout.addSpacing(50)
 
         self.organize_button = QPushButton("Organize PDFs")
@@ -104,7 +135,8 @@ class SmartPDFManagerApp(QWidget):
                                             background-color: lightgreen;
                                         }
                                     """)
-        self.organize_button.setDisabled(self.__selected_output_directory is None or self.__selected_input_directory is None)
+        self.organize_button.setDisabled(
+            self.__selected_output_directory is None or self.__selected_input_directory is None)
         layout.addWidget(self.organize_button)
 
         self.status_label = QLabel("Idle...")
@@ -122,8 +154,11 @@ class SmartPDFManagerApp(QWidget):
 
         self.organize_button.clicked.connect(self.organize_pdfs)
 
+    def open_keyword_manager_app(self):
+        self.__keyword_manager_app = KeywordManagerApp(db_manager=self.db_manager)
+        self.__keyword_manager_app.show()
+
     def download_model_in_thread(self, model_name: str):
-        # Download des Modells in einem separaten Thread
         download_thread = threading.Thread(target=self.download_model_if_needed, args=(model_name,))
         download_thread.start()
 
@@ -132,19 +167,22 @@ class SmartPDFManagerApp(QWidget):
             model_path: Path = self.__default_model_path / "en_core_web_sm"
             if not (model_path / "config.cfg").exists():
                 self.status_label.setText("Downloading English model...")
-                subprocess.run(["python", "-m", "spacy", "download", "en_core_web_sm", "--target", str(self.__default_model_path)])
+                subprocess.run(
+                    ["python", "-m", "spacy", "download", "en_core_web_sm", "--target", str(self.__default_model_path)])
                 self.status_label.setText("Idle...")
         elif language == "German":
             model_path: Path = self.__default_model_path / "de_core_news_sm"
             if not (model_path / "config.cfg").exists():
                 self.status_label.setText("Downloading German model...")
-                subprocess.run(["python", "-m", "spacy", "download", "de_core_news_sm", "--target", str(self.__default_model_path)])
+                subprocess.run(["python", "-m", "spacy", "download", "de_core_news_sm", "--target",
+                                str(self.__default_model_path)])
                 self.status_label.setText("Idle...")
         elif language == "French":
             model_path: Path = self.__default_model_path / "fr_core_news_sm"
             if not (model_path / "config.cfg").exists():
                 self.status_label.setText("Downloading French model...")
-                subprocess.run(["python", "-m", "spacy", "download", "fr_core_news_sm", "--target", str(self.__default_model_path)])
+                subprocess.run(["python", "-m", "spacy", "download", "fr_core_news_sm", "--target",
+                                str(self.__default_model_path)])
                 self.status_label.setText("Idle...")
 
     def change_language(self):
@@ -168,7 +206,8 @@ class SmartPDFManagerApp(QWidget):
         if input_dir:
             self.line_edit_input_Directory.setText(input_dir)
             self.__selected_input_directory = input_dir
-            self.organize_button.setDisabled(self.__selected_output_directory is None or self.__selected_input_directory is None)
+            self.organize_button.setDisabled(
+                self.__selected_output_directory is None or self.__selected_input_directory is None)
         else:
             self.status_label.setText("No directory selected!")
 
@@ -177,7 +216,8 @@ class SmartPDFManagerApp(QWidget):
         if input_dir:
             self.line_edit_output_directory.setText(input_dir)
             self.__selected_output_directory = input_dir
-            self.organize_button.setDisabled(self.__selected_output_directory is None or self.__selected_input_directory is None)
+            self.organize_button.setDisabled(
+                self.__selected_output_directory is None or self.__selected_input_directory is None)
         else:
             self.status_label.setText("No directory selected!")
 

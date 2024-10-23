@@ -8,9 +8,11 @@
 
 - **Organize PDFs**: Classify and move PDFs into directories based on the most common entity (e.g., Organization, Person) found in the document.
 - **Supports English, German and French**: Detects entities in English, German and French, improving classification for multilingual documents.
+- **Customizable**: Add or adjust categories and keywords to tailor the classification logic to your needs.
 
 <p align="center">
-   <img src="smart_pdf_manager/ui/resources/spdfm_tool.png" width="300" />
+   <img src="smart_pdf_manager/ui/resources/spdfm.png" width="300" />
+   <img src="smart_pdf_manager/ui/resources/keyword_manager.png" width="300" />
 </p>
 
 ## Installation (Only if you don't use the executable)
@@ -44,8 +46,3 @@
 3. Place the PDF files you want to organize in a directory of your choice (e.g., `pdfs/`).
 4. Choose a directory "input" where the PDFs are located and a directory "output" where the PDFs will be moved to.
 5. Start the process by clicking on the "Organize PDFs" button.
-
-
-## Planned Features
-
-- **Customizable**: Add or adjust categories and keywords to tailor the classification logic to your needs.

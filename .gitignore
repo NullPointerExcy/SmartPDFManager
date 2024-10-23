@@ -7,3 +7,5 @@ dist/
 /smart_pdf_manager/ui/models/en_core_web_sm/
 /SmartPDFManager.egg-info/
 /.eggs/
+*.db
+db
